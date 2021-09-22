@@ -8,7 +8,7 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User
+from models import db, User, Planet, People
 #from models import Person
 
 app = Flask(__name__)
@@ -42,23 +42,34 @@ def handle_hello():
 
 @app.route('/api/people')
 def get_people():
-    return 'People!'
+    people = People.query.all()
+    people = list(map(lambda p: p.serialize(), people))
+    return jsonify(people)
 
 @app.route('/api/people/<int:id>',methods=['GET'])
-def get_user(id):
-    return 'People by id'
+def get_people_by_id(id):
+    people = People.query.get(id)
+    if not people: return jsonify({"message": "There is not characters with this id", "status_code": 400}),400
+    return jsonify(people.serialize())
 
 @app.route('/api/planets', methods=['GET'])
 def get_planets():
-    return 'Planets!!'
+    planets = Planet.query.all()
+    planets = list(map(lambda p: p.serialize(), planets))
+    return jsonify(planets)
 
 @app.route('/api/planets/<int:id>',methods=['GET'])
 def get_planet(id):
-    return 'Planets by id'
+    planet = Planet.query.get(id)
+    if not planet: return jsonify({"message": "There is not planet with this id", "status_code": 400}),400
+    return jsonify(planet.serialize())
 
 @app.route('/api/users', methods=['GET'])
 def get_users():
-    return 'Users!!'
+    users = User.query.all()
+    users = list(map(lambda u: u.serialize(),users))
+
+    return jsonify(users)
 
 @app.route('/api/users/favorites', methods=['GET'])
 def get_user_favorites():
@@ -68,20 +79,50 @@ def get_user_favorites():
 
 @app.route('/api/favorite/planet/<int:id>', methods=['POST'])
 def set_favorite_planet(id):
-    return 'Set favorite for current user'
+    user = User.query.get(1)
+    planet = Planet.query.get(id)
+    if not user: return jsonify({ "message": 'There is no user with this id', "status_code": 400 }),400
+    if not planet: return jsonify({ "message": 'There is no planet with this id', "status_code": 400 }),400
+
+    user.favorites_planets.append(planet)
+    user.save()
+    return jsonify({"message": "Success!", "data": user.with_favorites()})
 
 @app.route('/api/favorite/people/<int:id>', methods=['POST'])
 def set_favorite_people(id):
-    return 'Set user favorte people'
+    user = User.query.get(1)
+    people = People.query.get(id)
+    if not user: return jsonify({ "message": 'There is no user with this id', "status_code": 400 }),400
+    if not people: return jsonify({ "message": 'There is no characters with this id', "status_code": 400 }),400
+
+    user.favorites_people.append(people)
+    user.save()
+    return jsonify({"message": "Success!", "data": user.with_favorites()})
 
 @app.route('/api/favorite/planet/<int:id>', methods=['DELETE'])
 def delete_favorite_planet(id):
-    return 'Delete favorite planet'
+    user = User.query.get(1)
+    planet = Planet.query.get(id)
+    if not user: return jsonify({ "message": 'There is no user with this id', "status_code": 400 }),400
+    if not planet: return jsonify({ "message": 'There is no planet with this id', "status_code": 400 }),400
+
+    user.favorites_planets.remove(planet)
+    user.save()
+    return jsonify({"message": "Delete success!", "data": user.with_favorites()})
 
 @app.route('/api/favorite/people/<int:id>', methods=['DELETE'])
 def delete_favorite_people(id):
-    return 'Delete favorite people'
+    user = User.query.get(1)
+    people = People.query.get(id)
+    if not user: return jsonify({ "message": 'There is no user with this id', "status_code": 400 }),400
+    if not people: return jsonify({ "message": 'There is no characters with this id', "status_code": 400 }),400
+
+    user.favorites_people.remove(people)
+    user.save()
+    return jsonify({"message": "Delete success!", "data": user.with_favorites()})
 # this only runs if `$ python src/main.py` is executed
+
+
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3000))
     app.run(host='0.0.0.0', port=PORT, debug=False)

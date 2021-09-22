@@ -6,6 +6,11 @@ user_people_favorites = db.Table('user_people_favorites',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
     db.Column('people_id', db.Integer, db.ForeignKey('people.id'), primary_key=True)
 )
+user_planet_favorites = db.Table('user_planet_favorites',
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+    db.Column('planet_id', db.Integer, db.ForeignKey('planets.id'), primary_key=True)
+)
+
 class User(db.Model):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
@@ -13,6 +18,7 @@ class User(db.Model):
     password = db.Column(db.String(80), unique=False, nullable=False)
     is_active = db.Column(db.Boolean, unique=False, nullable=False)
     favorites_people = db.relationship('People', secondary=user_people_favorites)
+    favorites_planets = db.relationship('Planet', secondary=user_planet_favorites)
     def __repr__(self):
         return '<User %r>' % self.username
 
@@ -24,13 +30,16 @@ class User(db.Model):
     }
     def with_favorites(self):
         return {
-            "id": self.id,
+            "user_id": self.id,
             "favorites": {
                 "people": list(map(lambda person: person.serialize(), self.favorites_people)),
-                "planets": []
+                "planets": list(map(lambda planet: planet.serialize(), self.favorites_planets)),
             },
             # do not serialize the password, its a security breach
-    }
+        }
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
 
 class People(db.Model):
     __tablename__ = "people"
@@ -48,6 +57,9 @@ class People(db.Model):
             "mass": self.mass,
             "gender": self.gender
         }
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
 
 
 class Planet(db.Model):
@@ -60,6 +72,21 @@ class Planet(db.Model):
     terrain = db.Column(db.String(120), unique=False, nullable=True)
     orbital_period = db.Column(db.Float, unique=False, nullable=True)
     rotation_period = db.Column(db.Float, unique=False, nullable=True)
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "diameter": self.diameter,
+            "population": self.population,
+            "climate": self.climate,
+            "terrain": self.terrain,
+            "orbital_period": self.orbital_period,
+            "rotation_period": self.rotation_period
+            }
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
 
 
 
