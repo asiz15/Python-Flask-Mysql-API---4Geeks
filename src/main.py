@@ -39,6 +39,48 @@ def handle_hello():
 
     return jsonify(response_body), 200
 
+
+@app.route('/api/people')
+def get_people():
+    return 'People!'
+
+@app.route('/api/people/<int:id>',methods=['GET'])
+def get_user(id):
+    return 'People by id'
+
+@app.route('/api/planets', methods=['GET'])
+def get_planets():
+    return 'Planets!!'
+
+@app.route('/api/planets/<int:id>',methods=['GET'])
+def get_planet(id):
+    return 'Planets by id'
+
+@app.route('/api/users', methods=['GET'])
+def get_users():
+    return 'Users!!'
+
+@app.route('/api/users/favorites', methods=['GET'])
+def get_user_favorites():
+    users = User.query.all()
+    users = list(map(lambda x: x.with_favorites(), users))
+    return jsonify(users)
+
+@app.route('/api/favorite/planet/<int:id>', methods=['POST'])
+def set_favorite_planet(id):
+    return 'Set favorite for current user'
+
+@app.route('/api/favorite/people/<int:id>', methods=['POST'])
+def set_favorite_people(id):
+    return 'Set user favorte people'
+
+@app.route('/api/favorite/planet/<int:id>', methods=['DELETE'])
+def delete_favorite_planet(id):
+    return 'Delete favorite planet'
+
+@app.route('/api/favorite/people/<int:id>', methods=['DELETE'])
+def delete_favorite_people(id):
+    return 'Delete favorite people'
 # this only runs if `$ python src/main.py` is executed
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3000))
